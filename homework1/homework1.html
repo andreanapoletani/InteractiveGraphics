@@ -3,12 +3,12 @@
 <p> </p>
 <div>
 zNear .01<input id="zNearSlider" type="range"
- min=".01" max="3" step="0.1" value="1" />
+ min="2" max="5" step="0.01" value="2" />
  3
 </div>
 <div>
 zFar 3<input id="zFarSlider" type="range"
- min="3" max="9" step="3.0" value="9" />
+ min="2.1" max="5" step="0.01" value="5" />
  10
 </div>
 <div>
@@ -36,6 +36,16 @@ aspect 0.5<input id="aspectSlider" type="range"
  min="0.5" max="2" step="0.1" value="1" />
  2
 </div>
+<div>
+sTheta 0<input id="spotThetaSlider" type="range"
+ min="0.43" max="0.55" step="0.0000005" value="0.43" />
+ 180
+</div>
+<div>
+Alpha 0<input id="alphaslider" type="range"
+ min="0" max="10" step="0.2" value="1" />
+ 10
+</div>
 
 
 <script id="vertex-shader" type="x-shader/x-vertex">
@@ -44,12 +54,15 @@ aspect 0.5<input id="aspectSlider" type="range"
 in  vec4 aPosition;
 in vec4 aNormal;
 out vec3 N, L, E;
+out vec3 spotE, spotH, spotD, spotL;
 
 uniform mat4 uModelViewMatrix;
 uniform mat4 uProjectionMatrix;
 uniform vec4 uLightPosition;
 uniform mat3 uNormalMatrix;
 
+uniform vec4 spotLightPosition;
+uniform vec4 spotLightDirection;
 
 
 void main()
@@ -78,6 +91,15 @@ void main()
 
   E =  -normalize(pos);
   N = normalize(uNormalMatrix*aNormal.xyz);
+
+  vec3 spotLight=spotLightPosition.xyz-pos;
+  spotL=normalize(spotLight);
+  spotE=normalize(-pos);
+  spotH=normalize(spotL+spotE);
+  spotD=spotLightDirection.xyz;
+
+
+
   gl_Position = uProjectionMatrix * uModelViewMatrix *aPosition;
 }
 </script>
@@ -90,13 +112,12 @@ precision mediump float;
 uniform vec4 uAmbientProduct, uDiffuseProduct, uSpecularProduct;
 uniform float uShininess;
 
-/*uniform vec4 spotLightPosition;
 uniform vec4 spotAmbientProduct, spotDiffuseProduct,spotSpecularProduct;
-uniform vec4 spotLightDirection;
-uniform float lCutOff;
-uniform float spotAlhpa;*/
+uniform float spotTheta;
+uniform float spotAlhpa;
 
 in vec3 N, L, E;
+in vec3 spotE, spotH, spotD, spotL;
 out vec4 fColor;
 
 
@@ -114,33 +135,30 @@ main()
 
   if( dot(L, N) < 0.0 ) specular = vec4(0.0, 0.0, 0.0, 1.0);
 
-  fColor = ambient + diffuse +specular;
-  fColor.a = 1.0;
+  //fColor = ambient + diffuse +specular;
+  //
 
 
 
   //spotlight
-    /*vec3 spotLight=spotLightPosition.xyz;
-    vec3 spotL=normalize(spotLight);
-    vec3 spotE=normalize(-pos);
-    vec3 spotH=normalize(spotL+spotE);
-    vec3 spotD=spotLightDirection.xyz;
-    vec4 spotAmbient=spotAmbientProduct;
-    float spotKd=max(dot(spotL,N),0.0);
-    vec4 spotDiffuse=spotKd*spotDiffuseProduct;
-    float spotKs=pow(max(dot(N,spotH),0.0), uShininess);
-    vec4 spotSpecular=spotKs*spotSpecularProduct;
-    if(dot(spotL,N)<0.0){
-    spotSpecular=vec4(0.0,0.0,0.0,1.0);
-    }
-    float lEffect= dot(normalize(spotD), normalize((spotL+spotE)));
-    if(lEffect>lCutOff)
-    {
-      fColor = spotAmbient + spotDiffuse + spotDiffuse;
-    } else {
-      fColor = ambient + diffuse + specular;
-    }*/
 
+  vec4 spotAmbient=spotAmbientProduct;
+  float spotKd=max(dot(spotL,N),0.0);
+  vec4 spotDiffuse=spotKd*spotDiffuseProduct;
+  float spotKs=pow(max(dot(N,spotH),0.0), uShininess);
+  vec4 spotSpecular=spotKs*spotSpecularProduct;
+  if(dot(spotL,N)<0.0){
+  spotSpecular=vec4(0.0,0.0,0.0,1.0);
+  }
+  float cutOff= dot(normalize(spotD), normalize(spotL));
+  if(cutOff<spotTheta && cutOff>(-spotTheta))
+  {
+    float attenuation = pow(cutOff, spotAlhpa);
+    fColor = attenuation*(spotAmbient + spotDiffuse + spotSpecular) + ambient + diffuse + specular;
+  } else {
+    fColor = ambient + diffuse + specular;
+  }
+  fColor.a = 1.0;
 
 }
 </script>
