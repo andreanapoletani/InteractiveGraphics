@@ -41,6 +41,7 @@ var spotLightPosition = vec4(-10.0, -10.0, 10.0, 1.0 );
 var spotLightAmbient = vec4(0.2, 0.2, 0.2, 1.0 );
 var spotLightDiffuse = vec4( 1.0, 1.0, 1.0, 1.0 );
 var spotLightDirection = vec4(-0.5,1.0,2.0,1.0);
+var spotLightDirectionLoc;
 var spotTheta=0.43;
 var spotAlhpa = 1;
 var spotThetaVal, spotAlphaVal;
@@ -215,8 +216,7 @@ window.onload = function init() {
 
      gl.uniform4fv( gl.getUniformLocation(program,
         "spotLightPosition"),flatten(spotLightPosition) );
-     gl.uniform4fv( gl.getUniformLocation(program,
-        "spotLightDirection"),spotLightDirection );
+      spotLightDirectionLoc = gl.getUniformLocation(program, "spotLightDirection");
       //gl.uniform1f( gl.getUniformLocation(program,
       //  "lCutOff"),lCutOff);
       //gl.uniform1f( gl.getUniformLocation(program,
@@ -257,10 +257,35 @@ function render() {
       }
     };
 
+    console.log("x direction" + spotLightDirection[0]);
+    document.getElementById("xSpot").oninput = function(event) {
+      if(this.valueAsNumber !== spotLightDirection[0]){
+        spotLightDirection[0] = this.valueAsNumber;
+        console.log("Spotlight x spotlight direction value " + spotLightDirection[0]);
+      }
+    };
+
+    document.getElementById("ySpot").oninput = function(event) {
+      if(this.valueAsNumber !== spotLightDirection[1]){
+        spotLightDirection[1] = this.valueAsNumber;
+        console.log("Spotlight y spotlight direction value " + spotLightDirection[1]);
+      }
+    };
+
+    document.getElementById("zSpot").oninput = function(event) {
+      if(this.valueAsNumber !== spotLightDirection[2]){
+        spotLightDirection[2] = this.valueAsNumber;
+        console.log("Spotlight z spotlight direction value " + spotLightDirection[2]);
+      }
+    };
+
+
+    console.log("new x direction" + spotLightDirection[0]);
+
+    gl.uniform4fv(spotLightDirectionLoc, spotLightDirection);
     gl.uniform1f(spotThetaVal, spotTheta);
     gl.uniform1f(spotAlphaVal, spotAlhpa);
 
-    console.log("new spotlight theta value: " + spotTheta);
 
     for( var i=0; i<index; i+=3)
         gl.drawArrays(gl.TRIANGLES, i, 3);
