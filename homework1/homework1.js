@@ -30,27 +30,20 @@ var eye;
 const at = vec3(0.0, 0.0, 0.0);
 const up = vec3(0.0, 1.0, 0.0);
 
-var lightPosition = vec4(-40.0, 50.0, 0.0, 0.0);
-var lightAmbient = vec4(0.2, 0.2, 0.2, 1.0);
-var lightDiffuse = vec4(1.0, 1.0, 1.0, 1.0);
-var lightSpecular = vec4(1.0, 1.0, 1.0, 1.0);
+var dirLightPosition = vec4(-10.0, 0.0, 0.0, 0.0);
+var dirLightAmbient = vec4(0.2, 0.2, 0.2, 1.0);
+var dirLightDiffuse = vec4(1.0, 1.0, 1.0, 1.0);
 
 var materialAmbient = vec4(1.0, 0.0, 1.0, 1.0);
 var materialDiffuse = vec4(1.0, 0.8, 0.0, 1.0);
-var materialSpecular = vec4(1.0, 1.0, 1.0, 1.0);
-var materialShininess = 20.0;
 
 var spotLightPosition = vec4(-10.0, -10.0, 10.0, 1.0 );
 var spotLightAmbient = vec4(0.2, 0.2, 0.2, 1.0 );
 var spotLightDiffuse = vec4( 1.0, 1.0, 1.0, 1.0 );
-var spotLightSpecular = vec4( 1.0, 1.0, 1.0, 1.0 );
 var spotLightDirection = vec4(-0.5,1.0,2.0,1.0);
 var spotTheta=0.43;
 var spotAlhpa = 1;
 var spotThetaVal, spotAlphaVal;
-
-var ctm;
-var ambientColor, diffuseColor, specularColor;
 
 var modelViewMatrix, projectionMatrix;
 var modelViewMatrixLoc, projectionMatrixLoc;
@@ -124,13 +117,13 @@ window.onload = function init() {
     gl.useProgram(program);
 
 
-    var ambientProduct = mult(lightAmbient, materialAmbient);
-    var diffuseProduct = mult(lightDiffuse, materialDiffuse);
-    var specularProduct = mult(lightSpecular, materialSpecular);
+    var comp1_dir = mult(dirLightAmbient, materialAmbient);
+    var comp2_dir = mult(dirLightAmbient, materialAmbient);
+    var comp3_dir = mult(dirLightDiffuse, materialDiffuse);
 
-    var spotAmbientProduct = mult(spotLightAmbient, materialAmbient);
-    var spotDiffuseProduct = mult(spotLightDiffuse, materialDiffuse);
-    var spotSpecularProduct = mult(spotLightSpecular, materialSpecular);
+    var comp1_spot = mult(dirLightAmbient, materialAmbient);
+    var comp2_spot = mult(spotLightAmbient, materialAmbient);
+    var comp3_spot = mult(spotLightDiffuse, materialDiffuse);
 
 
     tetrahedron(va, vb, vc, vd, 2);
@@ -204,22 +197,22 @@ window.onload = function init() {
 
 
     gl.uniform4fv( gl.getUniformLocation(program,
-       "uAmbientProduct"),flatten(ambientProduct));
+       "comp1_dir"),flatten(comp1_dir));
     gl.uniform4fv( gl.getUniformLocation(program,
-       "uDiffuseProduct"),flatten(diffuseProduct));
+       "comp2_dir"),flatten(comp2_dir));
     gl.uniform4fv( gl.getUniformLocation(program,
-       "uSpecularProduct"),flatten(specularProduct));
+       "comp3_dir"),flatten(comp3_dir));
     gl.uniform4fv( gl.getUniformLocation(program,
-       "uLightPosition"),flatten(lightPosition));
-    gl.uniform1f( gl.getUniformLocation(program,
-       "uShininess"),materialShininess);
+       "comp1_spot"),flatten(comp1_spot));
+    gl.uniform4fv( gl.getUniformLocation(program,
+       "comp2_spot"),flatten(comp2_spot));
+    gl.uniform4fv( gl.getUniformLocation(program,
+       "comp3_spot"),flatten(comp3_spot));
+    gl.uniform4fv( gl.getUniformLocation(program,
+       "uLightPosition"),flatten(dirLightPosition));
 
-     gl.uniform4fv( gl.getUniformLocation(program,
-       "spotAmbientProduct"),flatten(spotAmbientProduct) );
-     gl.uniform4fv( gl.getUniformLocation(program,
-       "spotDiffuseProduct"),flatten(spotDiffuseProduct) );
-     gl.uniform4fv( gl.getUniformLocation(program,
-       "spotSpecularProduct"),flatten(spotSpecularProduct) );
+
+
      gl.uniform4fv( gl.getUniformLocation(program,
         "spotLightPosition"),flatten(spotLightPosition) );
      gl.uniform4fv( gl.getUniformLocation(program,

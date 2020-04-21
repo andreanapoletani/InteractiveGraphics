@@ -109,54 +109,60 @@ void main()
 
 precision mediump float;
 
-uniform vec4 uAmbientProduct, uDiffuseProduct, uSpecularProduct;
-uniform float uShininess;
-
-uniform vec4 spotAmbientProduct, spotDiffuseProduct,spotSpecularProduct;
+uniform vec4 comp1_dir, comp2_dir, comp3_dir, comp1_spot, comp2_spot, comp3_spot;
 uniform float spotTheta;
 uniform float spotAlhpa;
 
-in vec3 N, L, E;
+in vec3 N, L;
 in vec3 spotE, spotH, spotD, spotL;
 out vec4 fColor;
+vec4 ci_dir, cs_dir, ci_spot, cs_spot, col_dir, col_spot;
 
 
 void
 main()
 {
-  vec3 H = normalize( L + E );
-  vec4 ambient = uAmbientProduct;
 
-  float Kd = max( dot(L, N), 0.0 );
-  vec4  diffuse = Kd*uDiffuseProduct;
+  ci_dir = comp1_dir + comp2_dir + comp3_dir;
+  cs_dir = comp1_dir + comp2_dir;
 
-  float Ks = pow( max(dot(N, H), 0.0), uShininess );
-  vec4  specular = Ks * uSpecularProduct;
-
-  if( dot(L, N) < 0.0 ) specular = vec4(0.0, 0.0, 0.0, 1.0);
-
-  //fColor = ambient + diffuse +specular;
-  //
-
-
-
-  //spotlight
-
-  vec4 spotAmbient=spotAmbientProduct;
-  float spotKd=max(dot(spotL,N),0.0);
-  vec4 spotDiffuse=spotKd*spotDiffuseProduct;
-  float spotKs=pow(max(dot(N,spotH),0.0), uShininess);
-  vec4 spotSpecular=spotKs*spotSpecularProduct;
-  if(dot(spotL,N)<0.0){
-  spotSpecular=vec4(0.0,0.0,0.0,1.0);
+  ci_spot = comp1_spot + comp2_spot + comp3_spot;
+  cs_spot = comp1_spot + comp2_spot;
+  // compute the intensity for directional light respect to our cartoon model
+  float res_dir = dot(L, N);
+  if( res_dir > 0.0 ) {
+    if (res_dir >= 0.5) {
+      col_dir = ci_dir;
+    } else {
+      col_dir = cs_dir;
+    }
+  } else {
+    col_dir = cs_dir;
   }
+
+  // do the same for the spotlight
+
+  float res_spot = dot(spotL, N);
+  if( res_spot > 0.0 ) {
+    if (res_spot >= 0.5) {
+      col_spot = ci_dir;
+    } else {
+      col_spot = cs_dir;
+    }
+  } else {
+    col_spot = cs_dir;
+  }
+
+
+  // check is cone of spotlight cover the fragment
   float cutOff= dot(normalize(spotD), normalize(spotL));
   if(cutOff<spotTheta && cutOff>(-spotTheta))
   {
     float attenuation = pow(cutOff, spotAlhpa);
-    fColor = attenuation*(spotAmbient + spotDiffuse + spotSpecular) + ambient + diffuse + specular;
+    fColor = attenuation*col_spot + col_dir;
+
   } else {
-    fColor = ambient + diffuse + specular;
+    fColor = col_dir;
   }
   fColor.a = 1.0;
 
