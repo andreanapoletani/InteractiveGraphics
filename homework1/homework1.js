@@ -7,24 +7,49 @@ var gl;
 
 var index = 0;
 
+var numPositions = 108;
+
 var positionsArray = [];
 var normalsArray = [];
 
 
-var near = 2.0;
-var far = 5.0;
-var radius = 3.4;
-var theta = 0.52;
-var phi = -0.785;
+var vertices = [
+  vec4(0.5, 0.1,  0.0, 1.0),
+  vec4(1.0,  0.2,  0.0, 1.0),
+  vec4(1.0,  0.6,  0.0, 1.0),
+  vec4(0.6, 0.6,  0.0, 1.0),
+  vec4(0.6, 0.2,  1.0, 1.0),
+  vec4(1.0,  0.2,  1.0, 1.0),
+  vec4(1.0,  0.6,  1.0, 1.0),
+  vec4(0.6, 0.6,  1.0, 1.0),
+  vec4(0.3, 0.2, 1.0, 1.0),
+  vec4(1.3, 0.2, 1.0, 1.0),
+  vec4(1.3, 0.6, 1.0, 1.0),
+  vec4(0.2, 0.6, 0.9, 1.0),
+  vec4(0.3, 0.2, 1.4, 1.0),
+  vec4(1.5, 0.2, 1.6, 1.0),
+  vec4(1.5, 0.6, 1.6, 1.0),
+  vec4(0.2, 0.6, 1.5, 1.0),
+  vec4(0.6, 0.6, 0.3, 1.0),
+  vec4(1.0, 0.6, 0.3, 1.0),
+  vec4(1.1, 1.2, 0.3, 1.0),
+  vec4(0.6, 1.1, 0.3, 1.0),
+  vec4(0.6, 0.6, 0.7, 1.0),
+  vec4(1.0, 0.6, 0.7, 1.0),
+  vec4(1.1, 0.8, 0.7, 1.0), //vec4(1.1, 1.0, 0.7, 1.0)
+  vec4(0.6, 1.1, 0.7, 1.0),
+];
+
+var near = 0.3;
+var far = 9.0;
+var radius = -2.7;
+var theta = 0.9;
+var phi = -0.3;
 var dr = 5.0 * Math.PI/180.0;
 
-var  fovy = 70.0;  // Field-of-view in Y direction angle (in degrees)
+var  fovy = 55.0;  // Field-of-view in Y direction angle (in degrees)
 var  aspect = 1.0;       // Viewport aspect ratio
 
-var va = vec4(0.0, 0.0, -1.0,1);
-var vb = vec4(0.0, 0.942809, 0.333333, 1);
-var vc = vec4(-0.816497, -0.471405, 0.333333, 1);
-var vd = vec4(0.816497, -0.471405, 0.333333,1);
 
 var eye;
 const at = vec3(0.0, 0.0, 0.0);
@@ -51,51 +76,56 @@ var modelViewMatrixLoc, projectionMatrixLoc;
 var nMatrix, nMatrixLoc;
 
 
-function triangle(a, b, c) {
+function quad(a, b, c, d) {
 
-     var t1 = subtract(b, a);
-     var t2 = subtract(c, a);
-     var normal = normalize(cross(t2, t1));
-     normal = vec4(normal[0], normal[1], normal[2], 0.0);
+     var t1 = subtract(vertices[c], vertices[a]);
+     var t2 = subtract(vertices[b], vertices[a]);
+     var normal = cross(t1, t2);
+     normal = vec4(normal[0], normal[1], normal[2], 1.0);
 
+
+     positionsArray.push(vertices[a]);
      normalsArray.push(normal);
+     positionsArray.push(vertices[b]);
      normalsArray.push(normal);
+     positionsArray.push(vertices[c]);
      normalsArray.push(normal);
-
-
-     positionsArray.push(a);
-     positionsArray.push(b);
-     positionsArray.push(c);
-
-     index += 3;
+     positionsArray.push(vertices[a]);
+     normalsArray.push(normal);
+     positionsArray.push(vertices[c]);
+     normalsArray.push(normal);
+     positionsArray.push(vertices[d]);
+     normalsArray.push(normal);
+     console.log("normal " + normal);
 }
 
-function divideTriangle(a, b, c, count) {
-    if (count > 0) {
 
-        var ab = mix( a, b, 0.5);
-        var ac = mix( a, c, 0.5);
-        var bc = mix( b, c, 0.5);
-
-        ab = normalize(ab, true);
-        ac = normalize(ac, true);
-        bc = normalize(bc, true);
-
-        divideTriangle(a, ab, ac, count - 1);
-        divideTriangle(ab, b, bc, count - 1);
-        divideTriangle(bc, c, ac, count - 1);
-        divideTriangle(ab, bc, ac, count - 1);
-    }
-    else {
-        triangle(a, b, c);
-    }
-}
-
-function tetrahedron(a, b, c, d, n) {
-    divideTriangle(a, b, c, n);
-    divideTriangle(d, c, b, n);
-    divideTriangle(a, d, b, n);
-    divideTriangle(a, c, d, n);
+function colorCube()
+{
+    quad(3, 2, 1, 0);
+    quad(5, 4, 0, 1);
+    quad(4, 7, 3, 0);
+    quad(1, 2, 6, 5);
+    quad(13, 12, 8, 9);
+    quad(15, 12, 13, 14);
+    quad(15, 11, 8, 12);
+    quad(14, 13, 9, 10);
+    quad(10, 9, 5, 6);
+    quad(7, 4, 8, 11);
+    quad(15, 14, 10, 11);
+    quad(16, 17, 2, 3);
+    quad(6, 21, 20, 7);
+    quad(23, 19, 16, 20);
+    quad(22, 18, 19, 23);
+    quad(22, 21, 17, 18);
+    quad(19, 18, 17, 16);
+    quad(21, 22, 23, 20);
+    /*quad(0, 1, 2, 3);
+    quad(7, 6, 5, 4);
+    quad(0, 4, 5, 1);
+    quad(1, 5, 6, 2);
+    quad(6, 7, 3, 2);
+    quad(7, 4, 0, 2);*/
 }
 
 window.onload = function init() {
@@ -127,7 +157,7 @@ window.onload = function init() {
     var comp3_spot = mult(spotLightDiffuse, materialDiffuse);
 
 
-    tetrahedron(va, vb, vc, vd, 2);
+    colorCube();
 
     var nBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, nBuffer);
@@ -287,8 +317,7 @@ function render() {
     gl.uniform1f(spotAlphaVal, spotAlhpa);
 
 
-    for( var i=0; i<index; i+=3)
-        gl.drawArrays(gl.TRIANGLES, i, 3);
+    gl.drawArrays(gl.TRIANGLES, 0, numPositions);
 
 
     requestAnimationFrame(render);
