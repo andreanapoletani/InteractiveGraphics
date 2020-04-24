@@ -7,11 +7,44 @@ var gl;
 
 var index = 0;
 
+var texSize = 64;
+
 var numPositions = 108;
 
 var positionsArray = [];
 var normalsArray = [];
+var texCoordsArray = [];
 
+var texture;
+var textFlagLoc;
+var textFlag = 1.0;
+
+/*var vertices = [
+  vec4(0.6, 0.2,  0.0, 1.0),
+  vec4(1.0,  0.2,  0.0, 1.0),
+  vec4(1.0,  0.6,  0.0, 1.0),
+  vec4(0.6, 0.6,  0.0, 1.0),
+  vec4(0.6, 0.2,  1.0, 1.0),
+  vec4(1.0,  0.2,  1.0, 1.0),
+  vec4(1.0,  0.6,  1.0, 1.0),
+  vec4(0.6, 0.6,  1.0, 1.0),
+  vec4(0.3, 0.2, 1.0, 1.0),
+  vec4(1.3, 0.2, 1.0, 1.0),
+  vec4(1.3, 0.6, 1.0, 1.0),
+  vec4(0.3, 0.6, 1.0, 1.0),
+  vec4(0.3, 0.2, 1.4, 1.0),
+  vec4(1.3, 0.2, 1.4, 1.0),
+  vec4(1.3, 0.6, 1.4, 1.0),
+  vec4(0.3, 0.6, 1.4, 1.0),
+  vec4(0.6, 0.6, 0.3, 1.0),
+  vec4(1.0, 0.6, 0.3, 1.0),
+  vec4(1.1, 1.0, 0.3, 1.0),
+  vec4(0.6, 1.1, 0.3, 1.0),
+  vec4(0.6, 0.6, 0.7, 1.0),
+  vec4(1.0, 0.6, 0.7, 1.0),
+  vec4(1.1, 1.0, 0.7, 1.0),
+  vec4(0.6, 1.1, 0.7, 1.0),
+];*/
 
 var vertices = [
   vec4(0.5, 0.1,  0.0, 1.0),
@@ -40,11 +73,18 @@ var vertices = [
   vec4(0.6, 1.1, 0.7, 1.0),
 ];
 
+var texCoord = [
+    vec2(0, 0),
+    vec2(0, 1),
+    vec2(1, 1),
+    vec2(1, 0)
+];
+
 var near = 0.3;
 var far = 9.0;
 var radius = -2.7;
 var theta = 0.9;
-var phi = -0.3;
+var phi = -0.43;
 var dr = 5.0 * Math.PI/180.0;
 
 var  fovy = 55.0;  // Field-of-view in Y direction angle (in degrees)
@@ -55,26 +95,37 @@ var eye;
 const at = vec3(0.0, 0.0, 0.0);
 const up = vec3(0.0, 1.0, 0.0);
 
-var dirLightPosition = vec4(-10.0, 0.0, 0.0, 0.0);
-var dirLightAmbient = vec4(0.2, 0.2, 0.2, 1.0);
+var dirLightPosition = vec4(-10.0, 10.0, 0.0, 0.0);
+var dirLightAmbient = vec4(0.1, 0.1, 0.1, 1.0);
 var dirLightDiffuse = vec4(1.0, 1.0, 1.0, 1.0);
 
-var materialAmbient = vec4(1.0, 0.0, 1.0, 1.0);
-var materialDiffuse = vec4(1.0, 0.8, 0.0, 1.0);
+var materialAmbient = vec4(1.0, 0.3, 0.2, 1.0);
+var materialDiffuse = vec4(0.78, 0.53, 0.32, 1.0);
 
-var spotLightPosition = vec4(-10.0, -10.0, 10.0, 1.0 );
-var spotLightAmbient = vec4(0.2, 0.2, 0.2, 1.0 );
-var spotLightDiffuse = vec4( 1.0, 1.0, 1.0, 1.0 );
-var spotLightDirection = vec4(-0.5,1.0,2.0,1.0);
+var spotLightPosition = vec4(-50.0, -50.0, -50.0, 1.0 );
+var spotLightAmbient = vec4(0.8, 0.8, 0.1, 1.0 );
+var spotLightDiffuse = vec4(0.8, 0.8, 0.1, 1.0 );
+var spotLightDirection = vec4(-0.59, -0.64, -0.24, 1.0);
 var spotLightDirectionLoc;
-var spotTheta=0.43;
+var cutOff=0.3144;
 var spotAlhpa = 1;
-var spotThetaVal, spotAlphaVal;
+var cutOffVal, spotAlphaVal;
 
 var modelViewMatrix, projectionMatrix;
 var modelViewMatrixLoc, projectionMatrixLoc;
 var nMatrix, nMatrixLoc;
 
+function configureTexture(program,  image ) {
+    texture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB,
+         gl.RGB, gl.UNSIGNED_BYTE, image);
+    gl.generateMipmap(gl.TEXTURE_2D);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER,
+                      gl.NEAREST_MIPMAP_LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.uniform1i(gl.getUniformLocation(program, "uTextureMap"), 0);
+}
 
 function quad(a, b, c, d) {
 
@@ -86,16 +137,27 @@ function quad(a, b, c, d) {
 
      positionsArray.push(vertices[a]);
      normalsArray.push(normal);
+     texCoordsArray.push(texCoord[0]);
+
      positionsArray.push(vertices[b]);
      normalsArray.push(normal);
+     texCoordsArray.push(texCoord[1]);
+
      positionsArray.push(vertices[c]);
      normalsArray.push(normal);
+     texCoordsArray.push(texCoord[2]);
+
      positionsArray.push(vertices[a]);
      normalsArray.push(normal);
+     texCoordsArray.push(texCoord[0]);
+
      positionsArray.push(vertices[c]);
      normalsArray.push(normal);
+     texCoordsArray.push(texCoord[2]);
+
      positionsArray.push(vertices[d]);
      normalsArray.push(normal);
+     texCoordsArray.push(texCoord[3]);
      console.log("normal " + normal);
 }
 
@@ -180,6 +242,18 @@ window.onload = function init() {
     projectionMatrixLoc = gl.getUniformLocation(program, "uProjectionMatrix");
     nMatrixLoc = gl.getUniformLocation(program, "uNormalMatrix");
 
+    var tBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, tBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(texCoordsArray), gl.STATIC_DRAW);
+
+    var texCoordLoc = gl.getAttribLocation(program, "aTexCoord");
+    gl.vertexAttribPointer(texCoordLoc, 2, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(texCoordLoc);
+
+    var image = document.getElementById("texImage");
+
+    configureTexture(program, image);
+
     // sliders for viewing parameters
 
     document.getElementById("zNearSlider").oninput = function (event) {
@@ -246,12 +320,13 @@ window.onload = function init() {
 
      gl.uniform4fv( gl.getUniformLocation(program,
         "spotLightPosition"),flatten(spotLightPosition) );
-      spotLightDirectionLoc = gl.getUniformLocation(program, "spotLightDirection");
+     spotLightDirectionLoc = gl.getUniformLocation(program, "spotLightDirection");
+     textFlagLoc = gl.getUniformLocation(program, "textFlag");
       //gl.uniform1f( gl.getUniformLocation(program,
       //  "lCutOff"),lCutOff);
       //gl.uniform1f( gl.getUniformLocation(program,
       //  "spotAlpha"),spotAlhpa);
-      spotThetaVal  = gl.getUniformLocation(program, "spotTheta");
+      cutOffVal  = gl.getUniformLocation(program, "cutOff");
       spotAlphaVal = gl.getUniformLocation(program, "spotAlhpa");
     render();
 }
@@ -273,10 +348,10 @@ function render() {
     gl.uniformMatrix4fv(projectionMatrixLoc, false, flatten(projectionMatrix) );
     gl.uniformMatrix3fv(nMatrixLoc, false, flatten(nMatrix)  );
 
-    document.getElementById("spotThetaSlider").oninput = function(event) {
-      if(this.valueAsNumber !== spotTheta){
-        spotTheta = this.valueAsNumber;
-        console.log("Spotlight theta value " + spotTheta);
+    document.getElementById("cutoffSlider").oninput = function(event) {
+      if(this.valueAsNumber !== cutOff){
+        cutOff = this.valueAsNumber;
+        console.log("cutOff value " + cutOff);
       }
     };
 
@@ -287,7 +362,6 @@ function render() {
       }
     };
 
-    console.log("x direction" + spotLightDirection[0]);
     document.getElementById("xSpot").oninput = function(event) {
       if(this.valueAsNumber !== spotLightDirection[0]){
         spotLightDirection[0] = this.valueAsNumber;
@@ -309,14 +383,18 @@ function render() {
       }
     };
 
+    document.getElementById("toggleTexture").onclick = function(event) {
+      if (textFlag === 1) textFlag = 0;
+      else textFlag = 1;
+    };
 
-    console.log("new x direction" + spotLightDirection[0]);
-
-    gl.uniform4fv(spotLightDirectionLoc, spotLightDirection);
-    gl.uniform1f(spotThetaVal, spotTheta);
+    gl.uniform1f(cutOffVal, cutOff);
     gl.uniform1f(spotAlphaVal, spotAlhpa);
+    gl.uniform4fv(spotLightDirectionLoc, spotLightDirection);
 
+    gl.uniform1f(textFlagLoc, textFlag);
 
+    //console.log(spotLightDirection);
     gl.drawArrays(gl.TRIANGLES, 0, numPositions);
 
 
