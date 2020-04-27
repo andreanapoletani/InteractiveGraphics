@@ -88,6 +88,7 @@
 <script id="vertex-shader" type="x-shader/x-vertex">
 #version 300 es
 
+// define all in/out variables
 in  vec4 aPosition;
 in vec4 aNormal;
 in vec2 aTexCoord;
@@ -95,6 +96,7 @@ out vec2 vTexCoord;
 out vec3 N, L, E;
 out vec3 spotE, spotD, spotL;
 
+// define all uniform variables
 uniform mat4 uModelViewMatrix;
 uniform mat4 uProjectionMatrix;
 uniform vec4 uLightPosition;
@@ -106,38 +108,28 @@ uniform vec4 spotLightDirection;
 
 void main()
 {
-  /*vec3 pos = (uModelViewMatrix * aPosition).xyz;
-
-  //fixed light postion
-
-  vec3 light = uLightPosition.xyz;
-  vec3 L = normalize(light - pos);
-
-
-  vec3 E = normalize(-pos);
-  //vec3 H = normalize(L + E);
-
-  vec4 NN = vec4(aNormal,0);
-
-  // Transform vertex normal into eye coordinates
-
-  vec3 N = normalize((uModelViewMatrix*NN).xyz);*/
-
   vec3 light;
+  
+  // compute pos in terms of eye coordinates
   vec3 pos = (uModelViewMatrix * aPosition).xyz;
+  
+  // compute light position vector for directional source light
   L = normalize(uLightPosition).xyz;
 
   E =  -normalize(pos);
   N = normalize(uNormalMatrix*aNormal.xyz);
 
+  // compute light position vector for spotlight
   vec3 spotLight=spotLightPosition.xyz - pos;
   spotL=normalize(spotLight);
   spotE=normalize(-pos);
 
   spotD=spotLightDirection.xyz;
 
-
+  // just pass to fragment shader
   vTexCoord = aTexCoord;
+  
+  // compute the position according to view position and projection
   gl_Position = uProjectionMatrix * uModelViewMatrix *aPosition;
 }
 </script>
@@ -147,28 +139,34 @@ void main()
 
 precision mediump float;
 
+// define all uniform variables
 uniform vec4 comp1_dir, comp2_dir, comp3_dir, comp1_spot, comp2_spot, comp3_spot;
 uniform float cutOff;
 uniform float spotAlhpa;
+uniform sampler2D uTextureMap;
+uniform float textFlag;
 
+// define all in/out variables
 in vec3 N, L;
 in vec3 spotE, spotD, spotL;
 in vec2 vTexCoord;
 out vec4 fColor;
+
+// define local variables for cartoon shading coefficients
 vec4 ci_dir, cs_dir, ci_spot, cs_spot, col_dir, col_spot;
 
-uniform sampler2D uTextureMap;
-uniform float textFlag;
 void
 main()
 {
 
+  // calculate cartoon shader coefficients Ci and Cs for both the light sources
   ci_dir = comp1_dir + comp2_dir + comp3_dir;
   cs_dir = comp1_dir + comp2_dir;
 
   ci_spot = comp1_spot + comp2_spot + comp3_spot;
   cs_spot = comp1_spot + comp2_spot;
-  // compute the intensity for directional light respect to our cartoon model
+  
+  // choose which one to choose according to the model
   float res_dir = dot(L, N);
   if( res_dir > 0.0 ) {
     if (res_dir >= 0.5) {
@@ -181,7 +179,6 @@ main()
   }
 
   // do the same for the spotlight
-
   float res_spot = dot(spotL, N);
   if( res_spot > 0.0 ) {
     if (res_spot >= 0.5) {
@@ -196,18 +193,29 @@ main()
 
   // check is cone of spotlight cover the fragment
   float phi= dot(normalize(spotD), spotL);
+  
+  // if the angle is between -cutOff and cutOff the fragment has the effect of the spotlight
   if(acos(phi)<cutOff && acos(phi)>(-cutOff))
   {
     float attenuation = pow(phi, spotAlhpa);
     if (textFlag == 1.0) {
+	
+	  // color computed as the effect of the directional light, the spotlight with the attenuation
+	  // and the applied texture
       fColor = (attenuation*col_spot + col_dir) * texture(uTextureMap, vTexCoord);
     } else {
+	
+	  // if the texture is disabled
       fColor = (attenuation*col_spot + col_dir);
     }
   } else {
     if (textFlag == 1.0) {
+	
+	  // fragment not covered by the spotlight
       fColor = col_dir * texture(uTextureMap, vTexCoord);
     } else {
+	
+	  // it the texture is disabled
       fColor = col_dir;
     }
   }

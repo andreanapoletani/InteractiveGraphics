@@ -11,41 +11,17 @@ var texSize = 64;
 
 var numPositions = 108;
 
+// declare arrays for the geometry
 var positionsArray = [];
 var normalsArray = [];
 var texCoordsArray = [];
 
+// variables for the texture
 var texture;
 var textFlagLoc;
 var textFlag = 1.0;
 
-/*var vertices = [
-  vec4(0.6, 0.2,  0.0, 1.0),
-  vec4(1.0,  0.2,  0.0, 1.0),
-  vec4(1.0,  0.6,  0.0, 1.0),
-  vec4(0.6, 0.6,  0.0, 1.0),
-  vec4(0.6, 0.2,  1.0, 1.0),
-  vec4(1.0,  0.2,  1.0, 1.0),
-  vec4(1.0,  0.6,  1.0, 1.0),
-  vec4(0.6, 0.6,  1.0, 1.0),
-  vec4(0.3, 0.2, 1.0, 1.0),
-  vec4(1.3, 0.2, 1.0, 1.0),
-  vec4(1.3, 0.6, 1.0, 1.0),
-  vec4(0.3, 0.6, 1.0, 1.0),
-  vec4(0.3, 0.2, 1.4, 1.0),
-  vec4(1.3, 0.2, 1.4, 1.0),
-  vec4(1.3, 0.6, 1.4, 1.0),
-  vec4(0.3, 0.6, 1.4, 1.0),
-  vec4(0.6, 0.6, 0.3, 1.0),
-  vec4(1.0, 0.6, 0.3, 1.0),
-  vec4(1.1, 1.0, 0.3, 1.0),
-  vec4(0.6, 1.1, 0.3, 1.0),
-  vec4(0.6, 0.6, 0.7, 1.0),
-  vec4(1.0, 0.6, 0.7, 1.0),
-  vec4(1.1, 1.0, 0.7, 1.0),
-  vec4(0.6, 1.1, 0.7, 1.0),
-];*/
-
+// declare the vertices of our geometry
 var vertices = [
   vec4(0.5, 0.1,  0.0, 1.0),
   vec4(1.0,  0.2,  0.0, 1.0),
@@ -69,10 +45,11 @@ var vertices = [
   vec4(0.6, 1.1, 0.3, 1.0),
   vec4(0.6, 0.6, 0.7, 1.0),
   vec4(1.0, 0.6, 0.7, 1.0),
-  vec4(1.1, 0.8, 0.7, 1.0), //vec4(1.1, 1.0, 0.7, 1.0)
+  vec4(1.1, 0.8, 0.7, 1.0),
   vec4(0.6, 1.1, 0.7, 1.0),
 ];
 
+// declare the texture coordinates 
 var texCoord = [
     vec2(0, 0),
     vec2(0, 1),
@@ -80,6 +57,7 @@ var texCoord = [
     vec2(1, 0)
 ];
 
+// parameters for the projectionMatrix
 var near = 0.3;
 var far = 9.0;
 var radius = -2.7;
@@ -90,18 +68,21 @@ var dr = 5.0 * Math.PI/180.0;
 var  fovy = 55.0;  // Field-of-view in Y direction angle (in degrees)
 var  aspect = 1.0;       // Viewport aspect ratio
 
-
+// parameters for the modelViewMatrix
 var eye;
 const at = vec3(0.0, 0.0, 0.0);
 const up = vec3(0.0, 1.0, 0.0);
 
+// parameters of the directional light
 var dirLightPosition = vec4(-10.0, 10.0, 0.0, 0.0);
 var dirLightAmbient = vec4(0.1, 0.1, 0.1, 1.0);
 var dirLightDiffuse = vec4(1.0, 1.0, 1.0, 1.0);
 
+// parameters of material
 var materialAmbient = vec4(1.0, 0.3, 0.2, 1.0);
 var materialDiffuse = vec4(0.78, 0.53, 0.32, 1.0);
 
+// parameters of the spotlight
 var spotLightPosition = vec4(-50.0, -50.0, -50.0, 1.0 );
 var spotLightAmbient = vec4(0.8, 0.8, 0.1, 1.0 );
 var spotLightDiffuse = vec4(0.8, 0.8, 0.1, 1.0 );
@@ -114,6 +95,7 @@ var cutOffVal, spotAlphaVal;
 var modelViewMatrix, projectionMatrix;
 var modelViewMatrixLoc, projectionMatrixLoc;
 var nMatrix, nMatrixLoc;
+
 
 function configureTexture(program,  image ) {
     texture = gl.createTexture();
@@ -129,12 +111,16 @@ function configureTexture(program,  image ) {
 
 function quad(a, b, c, d) {
 
+	 // compute normal vector for one triangle that compose a face
      var t1 = subtract(vertices[c], vertices[a]);
      var t2 = subtract(vertices[b], vertices[a]);
      var normal = cross(t1, t2);
      normal = vec4(normal[0], normal[1], normal[2], 1.0);
 
-
+	 // add vertices to the array of vertices
+	 // add the same normal for each vertex that compose a face
+	 // add texture coordinates
+	 
      positionsArray.push(vertices[a]);
      normalsArray.push(normal);
      texCoordsArray.push(texCoord[0]);
@@ -164,6 +150,8 @@ function quad(a, b, c, d) {
 
 function colorCube()
 {
+	// create faces of the object
+	
     quad(3, 2, 1, 0);
     quad(5, 4, 0, 1);
     quad(4, 7, 3, 0);
@@ -182,12 +170,7 @@ function colorCube()
     quad(22, 21, 17, 18);
     quad(19, 18, 17, 16);
     quad(21, 22, 23, 20);
-    /*quad(0, 1, 2, 3);
-    quad(7, 6, 5, 4);
-    quad(0, 4, 5, 1);
-    quad(1, 5, 6, 2);
-    quad(6, 7, 3, 2);
-    quad(7, 4, 0, 2);*/
+    
 }
 
 window.onload = function init() {
@@ -209,11 +192,12 @@ window.onload = function init() {
     var program = initShaders(gl, "vertex-shader", "fragment-shader");
     gl.useProgram(program);
 
-
+	// compute coefficients of the shading model for directional light
     var comp1_dir = mult(dirLightAmbient, materialAmbient);
     var comp2_dir = mult(dirLightAmbient, materialAmbient);
     var comp3_dir = mult(dirLightDiffuse, materialDiffuse);
 
+	// compute coefficients of the shading model for spotlight
     var comp1_spot = mult(dirLightAmbient, materialAmbient);
     var comp2_spot = mult(spotLightAmbient, materialAmbient);
     var comp3_spot = mult(spotLightDiffuse, materialDiffuse);
@@ -250,11 +234,12 @@ window.onload = function init() {
     gl.vertexAttribPointer(texCoordLoc, 2, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(texCoordLoc);
 
+	// take image element from the HTML
     var image = document.getElementById("texImage");
 
     configureTexture(program, image);
 
-    // sliders for viewing parameters
+    // sliders for viewing and projection parameters
 
     document.getElementById("zNearSlider").oninput = function (event) {
         if(this.valueAsNumber !== far){
@@ -300,7 +285,7 @@ window.onload = function init() {
     };
 
 
-
+	// pass elements to the shaders
     gl.uniform4fv( gl.getUniformLocation(program,
        "comp1_dir"),flatten(comp1_dir));
     gl.uniform4fv( gl.getUniformLocation(program,
@@ -322,10 +307,7 @@ window.onload = function init() {
         "spotLightPosition"),flatten(spotLightPosition) );
      spotLightDirectionLoc = gl.getUniformLocation(program, "spotLightDirection");
      textFlagLoc = gl.getUniformLocation(program, "textFlag");
-      //gl.uniform1f( gl.getUniformLocation(program,
-      //  "lCutOff"),lCutOff);
-      //gl.uniform1f( gl.getUniformLocation(program,
-      //  "spotAlpha"),spotAlhpa);
+
       cutOffVal  = gl.getUniformLocation(program, "cutOff");
       spotAlphaVal = gl.getUniformLocation(program, "spotAlhpa");
     render();
@@ -336,6 +318,7 @@ function render() {
 
     gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+	// compute eye parameter of the modelViewMatrix
     eye = vec3(radius*Math.sin(theta)*Math.cos(phi),
         radius*Math.sin(theta)*Math.sin(phi), radius*Math.cos(theta));
 
@@ -343,11 +326,11 @@ function render() {
     projectionMatrix = perspective(fovy, aspect, near, far);
     nMatrix = normalMatrix(modelViewMatrix, true);
 
-
     gl.uniformMatrix4fv(modelViewMatrixLoc, false, flatten(modelViewMatrix));
     gl.uniformMatrix4fv(projectionMatrixLoc, false, flatten(projectionMatrix) );
     gl.uniformMatrix3fv(nMatrixLoc, false, flatten(nMatrix)  );
 
+	// check for changes in the sliders' values
     document.getElementById("cutoffSlider").oninput = function(event) {
       if(this.valueAsNumber !== cutOff){
         cutOff = this.valueAsNumber;
@@ -394,7 +377,6 @@ function render() {
 
     gl.uniform1f(textFlagLoc, textFlag);
 
-    //console.log(spotLightDirection);
     gl.drawArrays(gl.TRIANGLES, 0, numPositions);
 
 
