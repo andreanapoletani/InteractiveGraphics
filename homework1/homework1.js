@@ -1,3 +1,6 @@
+// Napoletani Andrea 1609711
+// Engineering in Computer Science
+
 "use strict";
 
 var homework1 = function() {
