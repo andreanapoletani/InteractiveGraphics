@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<script id="vertex-shader" type="x-shader/x-vertex">
+#version 300 es
+
+in vec4 aPosition;
+
+uniform mat4 modelViewMatrix;
+uniform mat4 projectionMatrix;
+
+in vec2 aTexCoord;
+out vec2 vTexCoord;
+
+void main()
+{
+    gl_Position = projectionMatrix * modelViewMatrix * aPosition;
+
+    // just pass to fragment shader
+    vTexCoord = aTexCoord;
+}
+</script>
+
+<script id="fragment-shader" type="x-shader/x-fragment">
+#version 300 es
+
+precision mediump float;
+
+out vec4 fColor;
+
+uniform int objectIndicator;
+uniform sampler2D treeRootTex;
+uniform sampler2D treeCrownTex;
+uniform sampler2D bearBodyTex;
+uniform sampler2D bearHeadTex;
+
+in vec2 vTexCoord;
+
+void main() {
+
+    switch(objectIndicator) {
+        case 1:
+            fColor = texture(treeRootTex, vTexCoord);
+        break;
+        case 2:
+            fColor = texture(treeCrownTex, vTexCoord);
+        break;
+        case 3:
+            fColor = texture(bearBodyTex, vTexCoord);
+        break;
+        case 4:
+            fColor = vec4(0.5, 0.25, 0.0, 1.0) * texture(bearHeadTex, vTexCoord);
+        break;
+    }
+
+
+}
+</script>
+
+<script type="text/javascript" src="../Common/InitShaders.js"></script>
+<script type="text/javascript" src="../Common/MVnew.js"></script>
+<script type="text/javascript" src="Homework2.js"></script>
+
+<body>
+<label>Phi: </label> <input type="range" id="Phi" min="2.4" max="9" step="0.1" value="6.5" >
+<label>Theta: </label> <input type="range" id="Theta" min="-1" max="1" step="0.1" value="0.15" >
+<label>Radius: </label><input type="range" id="R" min="40" max="100" step="0.1" value="70" >
+<button id="startAnimation">Start Animation</button>
+<canvas id="gl-canvas" width="1500" height="1000">
+Oops ... your browser doesn't support the HTML5 canvas element
+</canvas>
+<img id = "rootImage" src = "treeRoot.jpg" hidden></img>
+<img id = "crownImage" src = "treeCrown.jpg" hidden></img>
+<img id = "bodyImage" src = "bearBody.jpg" hidden></img>
+<img id = "headImage" src = "bearHead.jpg" hidden></img>
+</body>
+</html>
